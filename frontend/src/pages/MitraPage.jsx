@@ -247,8 +247,8 @@ export default function MitraPage() {
         <div className="flex items-center space-x-1.5 overflow-x-auto pb-0.5">
           {[
             { id: 'ALL', label: 'Semua Akun' },
-            { id: 'mitra', label: 'Mitra Saja' },
-            { id: 'admin', label: 'Admin Saja' },
+            { id: 'mitra', label: 'Mitra' },
+            { id: 'admin', label: 'Admin' },
           ].map((tab) => {
             const isSelected = roleFilter === tab.id;
             return (

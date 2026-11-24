@@ -50,12 +50,12 @@ export default function ScanOcrPage() {
   const [formData, setFormData] = useState({
     enb_id: searchParams.get('enb') || '',
     site_name: searchParams.get('name') || '',
-    latitude: '-7.050300',
-    longitude: '110.438500',
-    rsrp: '-84.5',
-    rsrq: '-9.0',
-    snr: '18.5',
-    notes: 'Hasil pemindaian screenshot G-NetTrack Telkomsel',
+    latitude: '',
+    longitude: '',
+    rsrp: '',
+    rsrq: '',
+    snr: '',
+    notes: '',
   });
 
   // Ambil daftar BTS Sites untuk auto-match enb_id
@@ -212,59 +212,6 @@ export default function ScanOcrPage() {
     }
   };
 
-  // Preset data G-NetTrack untuk kemudahan demonstrasi saat responsi
-  const handleUsePresetData = (presetType) => {
-    setErrorMsg('');
-    setSuccessMsg('Contoh data G-NetTrack berhasil dimuat ke formulir.');
-
-    if (presetType === 'good') {
-      setFormData({
-        enb_id: '990101',
-        site_name: 'TSEL_UNDIP_TEMBALANG',
-        latitude: '-7.050300',
-        longitude: '110.438500',
-        rsrp: '-82.0',
-        rsrq: '-8.0',
-        snr: '21.0',
-        notes: 'Preset G-NetTrack: Dekat antenna sector 1, kualitas sangat prima.',
-      });
-      setRawOcrText(
-        'G-NetTrack Pro v24.2\nOperator: TELKOMSEL\neNB: 990101\nLat/Lon: -7.050300 / 110.438500\nRSRP: -82.0 dBm\nRSRQ: -8.0 dB\nSNR: 21.0 dB'
-      );
-      setOcrConfidence(95);
-    } else if (presetType === 'fair') {
-      setFormData({
-        enb_id: '990102',
-        site_name: 'TSEL_BANJARSARI_TEMBALANG',
-        latitude: '-7.058200',
-        longitude: '110.442100',
-        rsrp: '-98.0',
-        rsrq: '-12.5',
-        snr: '8.4',
-        notes: 'Preset G-NetTrack: Penurunan level sinyal di dalam area padat.',
-      });
-      setRawOcrText(
-        'G-NetTrack Lite\nOperator: TELKOMSEL\nENB: 990102\nLatitude: -7.058200\nLongitude: 110.442100\nRSRP: -98.0 dBm\nRSRQ: -12.5 dB\nSINR: 8.4 dB'
-      );
-      setOcrConfidence(92);
-    } else {
-      setFormData({
-        enb_id: '990105',
-        site_name: 'TSEL_NGESREP_TIMUR',
-        latitude: '-7.042500',
-        longitude: '110.428900',
-        rsrp: '-110.5',
-        rsrq: '-17.0',
-        snr: '2.0',
-        notes: 'Preset G-NetTrack: Blank spot di bawah kontur bukit ruko bertingkat.',
-      });
-      setRawOcrText(
-        'G-NetTrack\neNodeB=990105\nLat -7,042500\nLong 110,428900\nRSRP -110,5 dBm\nRSRQ -17,0 dB\nSNR 2,0 dB'
-      );
-      setOcrConfidence(89);
-    }
-  };
-
   // Ambil lokasi GPS saat ini dari HP
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -289,7 +236,7 @@ export default function ScanOcrPage() {
   // Hitung live label kualitas sinyal berdasarkan RSRP
   const calculateQuality = (rsrpVal) => {
     const val = parseFloat(rsrpVal);
-    if (isNaN(val)) return { label: 'Tidak Diketahui', color: 'bg-slate-100 text-slate-700 border-slate-200' };
+    if (isNaN(val)) return { label: 'Menunggu Input', color: 'bg-slate-100 text-slate-700 border-slate-200' };
     if (val >= -85)
       return {
         label: 'Sangat Baik',
@@ -355,20 +302,15 @@ export default function ScanOcrPage() {
   };
 
   return (
-    <PageTransition className="space-y-6">
+    <PageTransition className="space-y-6 pb-28">
       {/* Title */}
-      <div>
-        <div className="flex items-center space-x-2">
-          <span className="p-1.5 rounded-lg bg-red-50 text-telkomsel-red">
-            <ScanLine className="w-5 h-5" />
-          </span>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Uji Sinyal & Ekstraksi OCR G-NetTrack
-          </h2>
-        </div>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Pindai 6 parameter RF Drive Test via File Explorer, Drag & Drop, atau Paste Clipboard (Ctrl+V)
-        </p>
+      <div className="flex items-center gap-2.5">
+        <span className="p-2 rounded-xl bg-red-50 text-telkomsel-red shrink-0">
+          <ScanLine className="w-5 h-5 sm:w-6 sm:h-6" />
+        </span>
+        <h2 className="text-xl sm:text-2xl font-bold leading-tight text-slate-900">
+          Pemindaian OCR G-NetTrack
+        </h2>
       </div>
 
       {errorMsg && (
@@ -395,12 +337,19 @@ export default function ScanOcrPage() {
 
       {/* Responsive Grid: 2-column on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Upload Dropzone, Preview, Presets */}
+        {/* Left Column: Upload Dropzone, Preview */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-5 sm:p-6 shadow-card border border-slate-200/90 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-              Screenshot G-NetTrack
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+                Screenshot G-NetTrack
+              </span>
+              {ocrConfidence !== null && (
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Keyakinan: {Math.round(ocrConfidence)}%
+                </span>
+              )}
+            </div>
             {imagePreview && (
               <div className="flex items-center space-x-2">
                 <button
@@ -507,43 +456,6 @@ export default function ScanOcrPage() {
             </div>
           )}
 
-          {/* Tombol Isi Cepat Demo (Sangat Praktis untuk Responsi) */}
-          <div className="pt-3 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-600">
-                Akses Cepat Demo Responsi:
-              </span>
-              {ocrConfidence !== null && (
-                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  Keyakinan OCR: {Math.round(ocrConfidence)}%
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleUsePresetData('good')}
-                className="py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-xl border border-emerald-200/80 text-center transition-all"
-              >
-                Sangat Baik (-82)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUsePresetData('fair')}
-                className="py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-bold rounded-xl border border-amber-200/80 text-center transition-all"
-              >
-                Cukup (-98)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUsePresetData('poor')}
-                className="py-1.5 px-2 bg-red-50 hover:bg-red-100 text-red-800 text-[11px] font-bold rounded-xl border border-red-200/80 text-center transition-all"
-              >
-                Buruk (-110)
-              </button>
-            </div>
-          </div>
-
           {/* Collapsible: Debugging Teks Mentah OCR */}
           {rawOcrText && (
             <div className="pt-2 border-t border-slate-100">
@@ -618,17 +530,17 @@ export default function ScanOcrPage() {
 
           {/* 2 & 3) Longitude & Latitude */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700">
-                2 & 3. Koordinat GPS (Latitude, Longitude)
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-sm font-semibold text-slate-800">
+                Koordinat GPS
               </label>
               <button
                 type="button"
                 onClick={handleGetLocation}
-                className="text-xs text-telkomsel-red font-bold hover:underline flex items-center space-x-1"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-[#EC2028] hover:bg-red-100 transition-colors"
               >
                 <MapPin className="w-3.5 h-3.5" />
-                <span>Gunakan GPS HP</span>
+                <span>Gunakan GPS</span>
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
