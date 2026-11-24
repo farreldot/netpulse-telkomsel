@@ -5,10 +5,11 @@ import BottomNav from './BottomNav';
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-slate-100/70 flex flex-col justify-between">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col text-slate-900 selection:bg-red-500 selection:text-white">
       <Header />
       
-      <main className="flex-1 w-full max-w-md mx-auto px-4 py-4 pb-28">
+      {/* Kontainer responsif luas: menyesuaikan penuh di desktop (max-w-6xl) dan mobile */}
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8 pb-32 md:pb-36">
         <Outlet />
       </main>
 

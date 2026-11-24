@@ -11,9 +11,13 @@ import {
   AlertCircle,
   X,
   ChevronRight,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { sitesApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import PageTransition from '../components/PageTransition';
 
 // Data dummy fallback jika backend belum aktif
 const FALLBACK_SITES = [
@@ -131,7 +135,6 @@ export default function SitesPage() {
         setSites(FALLBACK_SITES);
       }
     } catch {
-      // Fallback data jika backend belum berjalan atau koneksi terputus
       setSites(FALLBACK_SITES);
     } finally {
       setLoading(false);
@@ -183,7 +186,6 @@ export default function SitesPage() {
       await sitesApi.delete(site.id);
       setSites((prev) => prev.filter((s) => s.id !== site.id));
     } catch {
-      // Fallback local delete
       setSites((prev) => prev.filter((s) => s.id !== site.id));
     }
   };
@@ -234,297 +236,357 @@ export default function SitesPage() {
   });
 
   return (
-    <div className="space-y-4">
-      {/* Header Bar with Action Button */}
-      <div className="flex items-center justify-between">
+    <PageTransition className="space-y-6">
+      {/* Page Header with Action Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center space-x-1.5">
-            <Radio className="w-4 h-4 text-telkomsel-red" />
-            <span>Daftar BTS Telkomsel</span>
-          </h2>
-          <p className="text-[11px] text-slate-500">Area Semarang & Tembalang</p>
+          <div className="flex items-center space-x-2">
+            <span className="p-1.5 rounded-lg bg-red-50 text-telkomsel-red">
+              <Radio className="w-5 h-5" />
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Daftar BTS Telkomsel
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Monitoring menara pemancar & infrastruktur jaringan area Semarang & Tembalang
+          </p>
         </div>
 
         {isAdmin && (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
             onClick={openCreateModal}
-            className="flex items-center space-x-1 bg-telkomsel-red hover:bg-telkomsel-darkred text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-sm transition-transform active:scale-95"
+            className="self-start sm:self-auto flex items-center space-x-2 bg-telkomsel-gradient hover:opacity-95 text-white text-xs sm:text-sm font-bold py-2.5 px-4 rounded-xl shadow-md shadow-red-500/20 transition-all"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Site</span>
-          </button>
+            <Plus className="w-4 h-4" />
+            <span>Tambah BTS Baru</span>
+          </motion.button>
         )}
       </div>
 
-      {/* Search & Filter Controls */}
-      <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+      {/* Search & Filter Toolbar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama site atau eNB ID..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white transition-all"
+            placeholder="Cari nama site, eNB ID, atau lokasi..."
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white transition-all"
           />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Status Filter Chips */}
-        <div className="flex items-center space-x-1.5">
-          <Filter className="w-3.5 h-3.5 text-slate-400 mr-1" />
+        {/* Filter Tabs */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-0.5">
+          <Filter className="w-3.5 h-3.5 text-slate-400 mr-1 hidden sm:block" />
           {[
-            { id: 'ALL', label: 'Semua' },
+            { id: 'ALL', label: 'Semua Status' },
             { id: 'Active', label: 'Aktif' },
             { id: 'Maintenance', label: 'Maintenance' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setStatusFilter(tab.id)}
-              className={`text-[11px] px-2.5 py-1 rounded-lg font-semibold transition-all ${
-                statusFilter === tab.id
-                  ? 'bg-telkomsel-red text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map((tab) => {
+            const isSelected = statusFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Site List */}
+      {/* Responsive Grid List: 1 col on mobile, 2 col on tablet, 3 col on desktop */}
       {loading ? (
-        <div className="text-center py-10">
-          <div className="w-8 h-8 border-3 border-telkomsel-red border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-xs text-slate-500 font-medium">Memuat data BTS Telkomsel...</p>
+        <div className="text-center py-20 bg-white rounded-3xl border border-slate-200/80">
+          <div className="w-10 h-10 border-3 border-telkomsel-red border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-600 font-semibold">Memuat data BTS Telkomsel...</p>
+          <p className="text-xs text-slate-400 mt-1">Menghubungkan dengan database telekomunikasi</p>
         </div>
       ) : filteredSites.length === 0 ? (
-        <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6">
-          <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-700">Tidak ada BTS yang cocok</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            Coba ubah kata kunci pencarian atau filter status.
+        <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/80 p-6">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 text-telkomsel-red flex items-center justify-center mx-auto mb-3">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800">Tidak ada BTS yang cocok</h3>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+            Tidak ditemukan menara BTS dengan kata kunci "{search}". Coba periksa kembali eNB ID atau status filter.
           </p>
+          <button
+            onClick={() => {
+              setSearch('');
+              setStatusFilter('ALL');
+            }}
+            className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+          >
+            Reset Pencarian
+          </button>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredSites.map((site) => {
             const isActive = site.status === 'Active';
             return (
-              <div
+              <motion.div
                 key={site.id}
+                layout
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.985 }}
                 onClick={() => navigate(`/sites/${site.id}`)}
-                className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/90 hover:border-red-200 hover:shadow-md transition-all cursor-pointer active:scale-[0.99] group"
+                className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-card hover:shadow-card-hover border border-slate-200/90 hover:border-red-200 transition-all cursor-pointer group flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-[10px] font-black bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-md border border-slate-200">
-                        eNB {site.enb_id}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          isActive
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}
-                      >
-                        {site.status}
-                      </span>
-                    </div>
-
-                    <h3 className="text-xs font-bold text-slate-900 group-hover:text-telkomsel-red transition-colors">
-                      {site.site_name}
-                    </h3>
+                <div>
+                  {/* Top Row: eNB ID & Status */}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="text-[11px] font-black bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200/80 font-mono">
+                      eNB {site.enb_id}
+                    </span>
+                    <span
+                      className={`text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        isActive
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                          : 'bg-amber-50 text-amber-700 border-amber-200/80'
+                      }`}
+                    >
+                      {site.status}
+                    </span>
                   </div>
 
-                  {/* Actions for Admin Only */}
+                  {/* Site Title */}
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-telkomsel-red transition-colors leading-snug line-clamp-1">
+                    {site.site_name}
+                  </h3>
+
+                  {/* Address */}
+                  <div className="mt-2 flex items-start space-x-1.5 text-xs text-slate-500">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                    <span className="line-clamp-2 leading-relaxed">{site.address}</span>
+                  </div>
+                </div>
+
+                {/* Bottom Meta & Admin Controls */}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center space-x-1.5">
+                    <Layers className="w-3.5 h-3.5 text-telkomsel-red" />
+                    <span className="text-[11px] font-semibold text-slate-600">
+                      {site.frequency_band || '4G LTE'}
+                    </span>
+                  </div>
+
                   {isAdmin ? (
-                    <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="flex items-center space-x-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         onClick={(e) => openEditModal(e, site)}
                         className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Edit Site"
+                        title="Edit BTS"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={(e) => handleDelete(e, site)}
                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Hapus Site"
+                        title="Hapus BTS"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-telkomsel-red transition-colors" />
+                    <div className="flex items-center space-x-1 text-slate-400 group-hover:text-telkomsel-red transition-colors">
+                      <span className="text-[11px] font-bold">Detail</span>
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
                   )}
                 </div>
-
-                <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                  <div className="flex items-center space-x-1 truncate max-w-[220px]">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                    <span className="truncate">{site.address}</span>
-                  </div>
-
-                  <span className="text-[10px] bg-red-50 text-telkomsel-red font-semibold px-1.5 py-0.5 rounded">
-                    {site.frequency_band || '4G LTE'}
-                  </span>
-                </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       )}
 
       {/* Modal Tambah / Edit Site (Khusus Admin) */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">
-                {editingSite ? 'Edit Data BTS Site' : 'Tambah BTS Site Baru'}
-              </h3>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {formError && (
-              <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center space-x-1.5">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleFormSubmit} className="mt-4 space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  eNB ID (Fiktif 9901xx)
-                </label>
-                <input
-                  type="text"
-                  value={formData.enb_id}
-                  onChange={(e) => setFormData({ ...formData, enb_id: e.target.value })}
-                  placeholder="Contoh: 990109"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Nama Site
-                </label>
-                <input
-                  type="text"
-                  value={formData.site_name}
-                  onChange={(e) => setFormData({ ...formData, site_name: e.target.value })}
-                  placeholder="Contoh: TSEL_KRAPYAK_SMG"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Alamat Lengkap
-                </label>
-                <textarea
-                  rows="2"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Alamat penempatan tower BTS"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Latitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={formData.latitude}
-                    onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                    placeholder="-7.050300"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                    required
-                  />
+      <AnimatePresence>
+        {modalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200"
+            >
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                <div className="flex items-center space-x-2">
+                  <span className="p-1.5 rounded-lg bg-red-50 text-telkomsel-red">
+                    <Radio className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    {editingSite ? 'Edit Data BTS Site' : 'Tambah BTS Site Baru'}
+                  </h3>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Longitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={formData.longitude}
-                    onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                    placeholder="110.438500"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Frekuensi Band
-                  </label>
-                  <select
-                    value={formData.frequency_band}
-                    onChange={(e) => setFormData({ ...formData, frequency_band: e.target.value })}
-                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  >
-                    <option value="L1800 / L2100">L1800 / L2100</option>
-                    <option value="L900 / L1800">L900 / L1800</option>
-                    <option value="L1800 / L2300">L1800 / L2300</option>
-                    <option value="L900 / L1800 / L2100">L900 / L1800 / L2100</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Status Site
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Maintenance">Maintenance</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end space-x-2">
                 <button
-                  type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                 >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-1.5 bg-telkomsel-red hover:bg-telkomsel-darkred text-white text-xs font-bold rounded-xl shadow-sm disabled:opacity-70"
-                >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-            </form>
+
+              {formError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleFormSubmit} className="mt-4 space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      eNB ID (Fiktif 9901xx)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.enb_id}
+                      onChange={(e) => setFormData({ ...formData, enb_id: e.target.value })}
+                      placeholder="Contoh: 990109"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Nama Site
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.site_name}
+                      onChange={(e) => setFormData({ ...formData, site_name: e.target.value })}
+                      placeholder="Contoh: TSEL_KRAPYAK_SMG"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Alamat Lengkap Tower
+                  </label>
+                  <textarea
+                    rows="2"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Alamat penempatan tower BTS..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Latitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={formData.latitude}
+                      onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                      placeholder="-7.050300"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Longitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={formData.longitude}
+                      onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                      placeholder="110.438500"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Frekuensi Band
+                    </label>
+                    <select
+                      value={formData.frequency_band}
+                      onChange={(e) => setFormData({ ...formData, frequency_band: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    >
+                      <option value="L1800 / L2100">L1800 / L2100</option>
+                      <option value="L900 / L1800">L900 / L1800</option>
+                      <option value="L1800 / L2300">L1800 / L2300</option>
+                      <option value="L900 / L1800 / L2100">L900 / L1800 / L2100</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Status Site
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Maintenance">Maintenance</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 bg-telkomsel-gradient hover:opacity-95 text-white text-xs font-bold rounded-xl shadow-md shadow-red-500/20 disabled:opacity-70 transition-all"
+                  >
+                    {isSubmitting ? 'Menyimpan...' : 'Simpan Data'}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </PageTransition>
   );
 }

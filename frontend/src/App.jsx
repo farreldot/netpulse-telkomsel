@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, ProtectedRoute } from './context/AuthContext';
 import Layout from './components/Layout';
+import SmoothScroll from './components/SmoothScroll';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -16,7 +17,8 @@ import ProfilePage from './pages/ProfilePage';
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <SmoothScroll>
+        <AuthProvider>
         <Routes>
           {/* Public Route */}
           <Route path="/login" element={<LoginPage />} />
@@ -64,7 +66,8 @@ export default function App() {
           {/* Catch-all route */}
           <Route path="*" element={<Navigate to="/sites" replace />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </SmoothScroll>
     </BrowserRouter>
   );
 }

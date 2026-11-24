@@ -10,9 +10,13 @@ import {
   AlertCircle,
   X,
   Building,
+  ShieldCheck,
+  User,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import PageTransition from '../components/PageTransition';
 
 const FALLBACK_USERS = [
   {
@@ -190,124 +194,161 @@ export default function MitraPage() {
   });
 
   return (
-    <div className="space-y-4">
-      {/* Title */}
-      <div className="flex items-center justify-between">
+    <PageTransition className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center space-x-1.5">
-            <Users className="w-4 h-4 text-telkomsel-red" />
-            <span>Kelola Akun Pengguna</span>
-          </h2>
-          <p className="text-[11px] text-slate-500">Khusus Administrator Telkomsel</p>
+          <div className="flex items-center space-x-2">
+            <span className="p-1.5 rounded-lg bg-red-50 text-telkomsel-red">
+              <Users className="w-5 h-5" />
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Kelola Akun Mitra & Admin
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Manajemen otoritas akun teknisi lapangan dan administrator sistem Telkomsel
+          </p>
         </div>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
           onClick={openCreateModal}
-          className="flex items-center space-x-1 bg-telkomsel-red hover:bg-telkomsel-darkred text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-sm transition-transform active:scale-95"
+          className="self-start sm:self-auto flex items-center space-x-2 bg-telkomsel-gradient hover:opacity-95 text-white text-xs sm:text-sm font-bold py-2.5 px-4 rounded-xl shadow-md shadow-red-500/20 transition-all"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Tambah Mitra</span>
-        </button>
+          <Plus className="w-4 h-4" />
+          <span>Tambah Mitra Baru</span>
+        </motion.button>
       </div>
 
-      {/* Search & Filter */}
-      <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+      {/* Search & Filter Toolbar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari username, nama, atau unit..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white transition-all"
+            placeholder="Cari username, nama lengkap, atau unit kerja..."
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white transition-all"
           />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center space-x-1.5">
+        {/* Role Filter Tabs */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-0.5">
           {[
             { id: 'ALL', label: 'Semua Akun' },
             { id: 'mitra', label: 'Mitra Saja' },
             { id: 'admin', label: 'Admin Saja' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setRoleFilter(tab.id)}
-              className={`text-[11px] px-2.5 py-1 rounded-lg font-semibold transition-all ${
-                roleFilter === tab.id
-                  ? 'bg-telkomsel-red text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map((tab) => {
+            const isSelected = roleFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setRoleFilter(tab.id)}
+                className={`text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Users List */}
+      {/* Responsive Grid List: 1 col on mobile, 2 col on tablet, 3 col on desktop */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="w-8 h-8 border-3 border-telkomsel-red border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-xs text-slate-500 font-medium">Memuat data pengguna...</p>
+        <div className="text-center py-20 bg-white rounded-3xl border border-slate-200/80">
+          <div className="w-10 h-10 border-3 border-telkomsel-red border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-600 font-semibold">Memuat daftar pengguna...</p>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6">
-          <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-700">Tidak ada akun yang cocok</p>
+        <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/80 p-6">
+          <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-sm font-bold text-slate-800">Tidak ada akun yang cocok</h3>
+          <p className="text-xs text-slate-500 mt-1">Coba sesuaikan kata kunci pencarian atau filter peran.</p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredUsers.map((u) => {
             const isSelf = u.id === currentUser?.id;
+            const isAdminRole = u.role === 'admin';
             return (
-              <div
+              <motion.div
                 key={u.id}
-                className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/90 space-y-2.5"
+                layout
+                whileHover={{ y: -3 }}
+                className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-card hover:shadow-card-hover border border-slate-200/90 transition-all flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center space-x-1.5">
-                      <span className="font-bold text-xs text-slate-900">{u.full_name}</span>
-                      {isSelf && (
-                        <span className="text-[9px] bg-red-100 text-telkomsel-red font-bold px-1.5 py-0.2 rounded">
-                          Anda
-                        </span>
-                      )}
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-base shadow-xs text-white ${
+                          isAdminRole
+                            ? 'bg-telkomsel-gradient'
+                            : 'bg-gradient-to-tr from-blue-600 to-indigo-600'
+                        }`}
+                      >
+                        {u.full_name ? u.full_name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-1.5">
+                          <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
+                            {u.full_name}
+                          </h4>
+                          {isSelf && (
+                            <span className="text-[9px] bg-red-100 text-telkomsel-red font-bold px-1.5 py-0.5 rounded">
+                              Anda
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 font-mono">@{u.username}</p>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-slate-500 font-mono">@{u.username}</p>
-                  </div>
 
-                  <div className="flex items-center space-x-1.5">
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        u.role === 'admin'
-                          ? 'bg-red-50 text-telkomsel-red border border-red-200'
-                          : 'bg-blue-50 text-blue-700 border border-blue-200'
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                        isAdminRole
+                          ? 'bg-red-50 text-telkomsel-red border-red-200/80'
+                          : 'bg-blue-50 text-blue-700 border-blue-200/80'
                       }`}
                     >
                       {u.role}
                     </span>
-
-                    <button
-                      onClick={() => handleToggleStatus(u)}
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center space-x-1 transition-all ${
-                        u.is_active
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                          : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-                      }`}
-                      title="Klik untuk ubah status aktif"
-                    >
-                      {u.is_active ? <UserCheck className="w-3 h-3" /> : <UserX className="w-3 h-3" />}
-                      <span>{u.is_active ? 'Aktif' : 'Nonaktif'}</span>
-                    </button>
                   </div>
-                </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                  <div className="flex items-center space-x-1 truncate max-w-[210px]">
+                  <div className="flex items-center space-x-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <Building className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                     <span className="truncate">{u.mitra_unit || 'Unit Belum Diatur'}</span>
                   </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <button
+                    onClick={() => handleToggleStatus(u)}
+                    className={`text-[11px] font-bold px-3 py-1 rounded-xl border flex items-center space-x-1.5 transition-all ${
+                      u.is_active
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80 hover:bg-emerald-100'
+                        : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                    }`}
+                    title="Klik untuk ubah status aktif/nonaktif"
+                  >
+                    {u.is_active ? <UserCheck className="w-3.5 h-3.5" /> : <UserX className="w-3.5 h-3.5" />}
+                    <span>{u.is_active ? 'Aktif' : 'Nonaktif'}</span>
+                  </button>
 
                   <div className="flex items-center space-x-1">
                     <button
@@ -328,142 +369,156 @@ export default function MitraPage() {
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       )}
 
       {/* Modal Tambah / Edit Pengguna */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">
-                {editingUser ? 'Edit Akun Pengguna' : 'Tambah Akun Mitra Baru'}
-              </h3>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {formError && (
-              <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center space-x-1.5">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleFormSubmit} className="mt-4 space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="mitra2"
-                  disabled={!!editingUser}
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 disabled:bg-slate-100 disabled:text-slate-500 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Nama Lengkap
-                </label>
-                <input
-                  type="text"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder="Budi Santoso"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Password {editingUser && '(Kosongkan jika tidak diubah)'}
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="******"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  required={!editingUser}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Role Akun
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  >
-                    <option value="mitra">Mitra</option>
-                    <option value="admin">Admin</option>
-                  </select>
+      <AnimatePresence>
+        {modalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200"
+            >
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                <div className="flex items-center space-x-2">
+                  <span className="p-1.5 rounded-lg bg-red-50 text-telkomsel-red">
+                    <User className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    {editingUser ? 'Edit Akun Pengguna' : 'Tambah Akun Mitra Baru'}
+                  </h3>
                 </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Status Akun
-                  </label>
-                  <select
-                    value={formData.is_active ? 'true' : 'false'}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'true' })}
-                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                  >
-                    <option value="true">Aktif</option>
-                    <option value="false">Nonaktif</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Unit Kerja / Mitra
-                </label>
-                <input
-                  type="text"
-                  value={formData.mitra_unit}
-                  onChange={(e) => setFormData({ ...formData, mitra_unit: e.target.value })}
-                  placeholder="Mitra Drive Test Semarang"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-telkomsel-red focus:bg-white"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end space-x-2">
                 <button
-                  type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                 >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-1.5 bg-telkomsel-red hover:bg-telkomsel-darkred text-white text-xs font-bold rounded-xl shadow-sm disabled:opacity-70"
-                >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-            </form>
+
+              {formError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleFormSubmit} className="mt-4 space-y-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    placeholder="Contoh: mitra2"
+                    disabled={!!editingUser}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 disabled:bg-slate-100 disabled:text-slate-500 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Nama Lengkap
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                    placeholder="Budi Santoso"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Password {editingUser && '(Kosongkan jika tidak diubah)'}
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="******"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    required={!editingUser}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Role Otoritas
+                    </label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    >
+                      <option value="mitra">Mitra Drive Test</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Status Akun
+                    </label>
+                    <select
+                      value={formData.is_active ? 'true' : 'false'}
+                      onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'true' })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                    >
+                      <option value="true">Aktif</option>
+                      <option value="false">Nonaktif</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Unit Kerja / Mitra
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.mitra_unit}
+                    onChange={(e) => setFormData({ ...formData, mitra_unit: e.target.value })}
+                    placeholder="Mitra Drive Test Semarang"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
+                  />
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 bg-telkomsel-gradient hover:opacity-95 text-white text-xs font-bold rounded-xl shadow-md shadow-red-500/20 disabled:opacity-70 transition-all"
+                  >
+                    {isSubmitting ? 'Menyimpan...' : 'Simpan Akun'}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </PageTransition>
   );
 }
