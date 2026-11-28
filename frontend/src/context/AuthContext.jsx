@@ -64,6 +64,14 @@ export const AuthProvider = ({ children }) => {
     clearSession();
   };
 
+  const updateUser = (updatedUserData) => {
+    setUser((prev) => {
+      const newUser = { ...prev, ...updatedUserData };
+      localStorage.setItem('netpulse_user', JSON.stringify(newUser));
+      return newUser;
+    });
+  };
+
   // Monitor inaktivitas dan batas maksimal sesi secara otomatis
   useEffect(() => {
     if (token) {
@@ -89,6 +97,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}
@@ -108,11 +117,21 @@ export const useAuth = () => {
  * Komponen pembungkus untuk memproteksi rute privat
  */
 export const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Jika user wajib ganti password dan rute saat ini bukan /change-password
+  if (user?.must_change_password && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
+  }
+
+  // Jika user tidak wajib ganti password tetapi berada di /change-password
+  if (!user?.must_change_password && location.pathname === '/change-password') {
+    return <Navigate to="/scan" replace />;
   }
 
   if (requireAdmin && !isAdmin) {

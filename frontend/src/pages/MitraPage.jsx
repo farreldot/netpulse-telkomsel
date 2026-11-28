@@ -26,6 +26,7 @@ const FALLBACK_USERS = [
     role: 'admin',
     mitra_unit: 'Telkomsel Regional Jateng-DIY',
     is_active: true,
+    must_change_password: false,
   },
   {
     id: 2,
@@ -34,6 +35,7 @@ const FALLBACK_USERS = [
     role: 'mitra',
     mitra_unit: 'Mitra Drive Test Semarang',
     is_active: true,
+    must_change_password: true,
   },
 ];
 
@@ -86,6 +88,7 @@ export default function MitraPage() {
       role: 'mitra',
       mitra_unit: 'Mitra Drive Test Semarang',
       is_active: true,
+      must_change_password: true,
     });
     setFormError('');
     setModalOpen(true);
@@ -100,6 +103,7 @@ export default function MitraPage() {
       role: u.role,
       mitra_unit: u.mitra_unit || '',
       is_active: u.is_active,
+      must_change_password: u.must_change_password || false,
     });
     setFormError('');
     setModalOpen(true);
@@ -173,6 +177,7 @@ export default function MitraPage() {
         );
       } else {
         payload.password = formData.password;
+        payload.must_change_password = true;
         const res = await usersApi.create(payload);
         if (res.success && res.data) {
           setUsers((prev) => [...prev, res.data]);
@@ -321,7 +326,12 @@ export default function MitraPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                      {u.must_change_password && (
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-none bg-amber-50 text-amber-700 border border-amber-200/80">
+                          Password Sementara
+                        </span>
+                      )}
                       {isSelf && (
                         <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold leading-none bg-red-100 text-telkomsel-red border border-red-200/80">
                           Anda
@@ -451,7 +461,7 @@ export default function MitraPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Password {editingUser && '(Kosongkan jika tidak diubah)'}
+                    {editingUser ? 'Password (Kosongkan jika tidak diubah)' : 'Password Sementara'}
                   </label>
                   <input
                     type="password"
@@ -461,6 +471,11 @@ export default function MitraPage() {
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
                     required={!editingUser}
                   />
+                  {!editingUser && (
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Mitra wajib mengganti password ini saat login pertama kali.
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

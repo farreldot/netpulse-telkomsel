@@ -58,6 +58,10 @@ export const authApi = {
   getProfile: () => request('/auth/me', {
     method: 'GET',
   }),
+  changePassword: (passwordData) => request('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(passwordData),
+  }),
 };
 
 // 2. BTS Sites Service

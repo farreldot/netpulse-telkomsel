@@ -13,6 +13,7 @@ import SignalLogDetailPage from './pages/SignalLogDetailPage';
 import ScanOcrPage from './pages/ScanOcrPage';
 import MitraPage from './pages/MitraPage';
 import ProfilePage from './pages/ProfilePage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 
 export default function App() {
   return (
@@ -61,6 +62,9 @@ export default function App() {
             
             {/* 7. Halaman Profile & About */}
             <Route path="profile" element={<ProfilePage />} />
+
+            {/* 8. Halaman Wajib Ganti Password Akun Baru */}
+            <Route path="change-password" element={<ChangePasswordPage />} />
           </Route>
 
           {/* Catch-all route */}

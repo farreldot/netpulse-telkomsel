@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Radio, Lock, User, Eye, EyeOff, Zap, AlertCircle, Shield, Wifi, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,6 +25,16 @@ export default function LoginPage() {
     location.state.from.pathname !== '/sites'
       ? location.state.from.pathname
       : defaultTarget;
+
+  useEffect(() => {
+    if (isAuthenticated && !isExpired) {
+      if (user?.must_change_password) {
+        navigate('/change-password', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
+    }
+  }, [isAuthenticated, isExpired, user, navigate, from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,7 +50,11 @@ export default function LoginPage() {
     setIsSubmitting(false);
 
     if (result.success) {
-      navigate(from, { replace: true });
+      if (result.user?.must_change_password) {
+        navigate('/change-password', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } else {
       setErrorMsg(result.message || 'Autentikasi gagal. Periksa kembali username dan password Anda.');
     }

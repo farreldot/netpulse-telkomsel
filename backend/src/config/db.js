@@ -53,6 +53,9 @@ const initDb = async () => {
       console.log('[DB] Skema database berhasil diverifikasi/dibuat.');
     }
 
+    // Pastikan kolom must_change_password tersedia pada tabel users
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE;');
+
     // 2. Auto-seed Users
     const usersCountRes = await pool.query('SELECT COUNT(*) FROM users');
     const usersCount = parseInt(usersCountRes.rows[0].count, 10);

@@ -9,7 +9,7 @@ const getAllUsers = async (req, res) => {
   try {
     const { role, search } = req.query;
     let sql = `
-      SELECT id, username, full_name, role, mitra_unit, is_active, created_at, updated_at 
+      SELECT id, username, full_name, role, mitra_unit, is_active, must_change_password, created_at, updated_at 
       FROM users 
       WHERE 1=1
     `;
@@ -53,7 +53,7 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
 
     const result = await query(
-      `SELECT id, username, full_name, role, mitra_unit, is_active, created_at, updated_at 
+      `SELECT id, username, full_name, role, mitra_unit, is_active, must_change_password, created_at, updated_at 
        FROM users 
        WHERE id = $1`,
       [id]
@@ -125,9 +125,9 @@ const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const insertSql = `
-      INSERT INTO users (username, password, full_name, role, mitra_unit, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, username, full_name, role, mitra_unit, is_active, created_at, updated_at
+      INSERT INTO users (username, password, full_name, role, mitra_unit, is_active, must_change_password)
+      VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+      RETURNING id, username, full_name, role, mitra_unit, is_active, must_change_password, created_at, updated_at
     `;
     const result = await query(insertSql, [
       username.trim(),
@@ -235,7 +235,7 @@ const updateUser = async (req, res) => {
       UPDATE users 
       SET username = $1, password = $2, full_name = $3, role = $4, mitra_unit = $5, is_active = $6, updated_at = CURRENT_TIMESTAMP
       WHERE id = $7
-      RETURNING id, username, full_name, role, mitra_unit, is_active, created_at, updated_at
+      RETURNING id, username, full_name, role, mitra_unit, is_active, must_change_password, created_at, updated_at
     `;
 
     const result = await query(updateSql, [
