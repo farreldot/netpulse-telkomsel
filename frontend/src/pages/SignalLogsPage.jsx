@@ -144,9 +144,6 @@ export default function SignalLogsPage() {
               Riwayat Log Sinyal
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Rekapitulasi parameter RF hasil Drive Test & pemindaian OCR G-NetTrack
-          </p>
         </div>
 
         <motion.button

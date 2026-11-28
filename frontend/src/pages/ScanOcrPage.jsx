@@ -302,13 +302,13 @@ export default function ScanOcrPage() {
   };
 
   return (
-    <PageTransition className="space-y-6 pb-28">
+    <PageTransition className="space-y-6">
       {/* Title */}
-      <div className="flex items-center gap-2.5">
-        <span className="p-2 rounded-xl bg-red-50 text-telkomsel-red shrink-0">
-          <ScanLine className="w-5 h-5 sm:w-6 sm:h-6" />
+      <div className="flex items-center space-x-2">
+        <span className="p-1.5 rounded-lg bg-red-50 text-telkomsel-red">
+          <ScanLine className="w-5 h-5" />
         </span>
-        <h2 className="text-xl sm:text-2xl font-bold leading-tight text-slate-900">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           Pemindaian OCR G-NetTrack
         </h2>
       </div>

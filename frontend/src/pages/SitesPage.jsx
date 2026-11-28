@@ -248,9 +248,6 @@ export default function SitesPage() {
               Daftar BTS Telkomsel
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Monitoring menara pemancar & infrastruktur jaringan area Semarang & Tembalang
-          </p>
         </div>
 
         {isAdmin && (

@@ -11,11 +11,20 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/sites';
+  const searchParams = new URLSearchParams(location.search);
+  const isExpired = searchParams.get('reason') === 'expired';
+
+  const defaultTarget = '/scan';
+  const from =
+    location.state?.from?.pathname &&
+    location.state.from.pathname !== '/' &&
+    location.state.from.pathname !== '/sites'
+      ? location.state.from.pathname
+      : defaultTarget;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -162,6 +171,17 @@ export default function LoginPage() {
                 Silakan masukkan kredensial akun NetPulse Anda untuk melanjutkan
               </p>
             </div>
+
+            {isExpired && !errorMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start space-x-2.5 text-xs text-amber-800 font-medium"
+              >
+                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <span>Sesi login Anda telah berakhir karena batas waktu atau tidak ada aktivitas. Silakan masuk kembali.</span>
+              </motion.div>
+            )}
 
             {errorMsg && (
               <motion.div

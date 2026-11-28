@@ -1,3 +1,5 @@
+import { handleExpiredSession } from '../utils/sessionManager';
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 /**
@@ -19,9 +21,17 @@ async function request(endpoint, options = {}) {
 
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, config);
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
 
     if (!response.ok) {
+      if (response.status === 401) {
+        handleExpiredSession('expired');
+      }
       const error = new Error(data.message || `Request failed with status ${response.status}`);
       error.status = response.status;
       error.data = data;
@@ -30,6 +40,9 @@ async function request(endpoint, options = {}) {
 
     return data;
   } catch (err) {
+    if (err.status === 401) {
+      handleExpiredSession('expired');
+    }
     console.error(`[API Error] ${endpoint}:`, err);
     throw err;
   }

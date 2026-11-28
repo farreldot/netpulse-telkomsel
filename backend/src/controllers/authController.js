@@ -62,7 +62,7 @@ const login = async (req, res) => {
     };
 
     const secret = process.env.JWT_SECRET || 'netpulse_secret_key_default_change_in_production';
-    const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
+    const expiresIn = process.env.JWT_EXPIRES_IN || '2h';
 
     const token = jwt.sign(payload, secret, { expiresIn });
 

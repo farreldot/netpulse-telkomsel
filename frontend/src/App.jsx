@@ -32,7 +32,7 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/sites" replace />} />
+            <Route index element={<Navigate to="/scan" replace />} />
             
             {/* 1. Halaman Daftar Site */}
             <Route path="sites" element={<SitesPage />} />
@@ -64,7 +64,7 @@ export default function App() {
           </Route>
 
           {/* Catch-all route */}
-          <Route path="*" element={<Navigate to="/sites" replace />} />
+          <Route path="*" element={<Navigate to="/scan" replace />} />
         </Routes>
         </AuthProvider>
       </SmoothScroll>

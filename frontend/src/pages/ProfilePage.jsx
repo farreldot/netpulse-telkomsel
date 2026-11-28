@@ -110,9 +110,6 @@ export default function ProfilePage() {
             Profil & Pengaturan Akun
           </h2>
         </div>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Identitas operasional pengguna sistem dan pengelolaan instalasi Progressive Web App (PWA)
-        </p>
       </div>
 
       {/* Kartu Profil Utama Pengguna (Memuat identitas lengkap dari user yang sedang login) */}

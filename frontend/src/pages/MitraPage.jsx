@@ -206,9 +206,6 @@ export default function MitraPage() {
               Kelola Akun Mitra & Admin
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Manajemen otoritas akun teknisi lapangan dan administrator sistem Telkomsel
-          </p>
         </div>
 
         <motion.button
@@ -294,9 +291,9 @@ export default function MitraPage() {
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 min-w-0">
                       <div
-                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-base shadow-xs text-white ${
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-base shadow-xs text-white shrink-0 ${
                           isAdminRole
                             ? 'bg-telkomsel-gradient'
                             : 'bg-gradient-to-tr from-blue-600 to-indigo-600'
@@ -304,30 +301,30 @@ export default function MitraPage() {
                       >
                         {u.full_name ? u.full_name.charAt(0).toUpperCase() : 'U'}
                       </div>
-                      <div className="space-y-0.5">
-                        <div className="flex items-center space-x-1.5">
-                          <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
-                            {u.full_name}
-                          </h4>
-                          {isSelf && (
-                            <span className="text-[9px] bg-red-100 text-telkomsel-red font-bold px-1.5 py-0.5 rounded">
-                              Anda
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-400 font-mono">@{u.username}</p>
+                      <div className="space-y-0.5 min-w-0">
+                        <h4 className="font-extrabold text-sm text-slate-900 leading-snug truncate">
+                          {u.full_name}
+                        </h4>
+                        <p className="text-xs text-slate-400 font-mono truncate">@{u.username}</p>
                       </div>
                     </div>
 
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
-                        isAdminRole
-                          ? 'bg-red-50 text-telkomsel-red border-red-200/80'
-                          : 'bg-blue-50 text-blue-700 border-blue-200/80'
-                      }`}
-                    >
-                      {u.role}
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isSelf && (
+                        <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold leading-none bg-red-100 text-telkomsel-red border border-red-200/80">
+                          Anda
+                        </span>
+                      )}
+                      <span
+                        className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold leading-none uppercase tracking-wider border ${
+                          isAdminRole
+                            ? 'bg-red-50 text-telkomsel-red border-red-200/80'
+                            : 'bg-blue-50 text-blue-700 border-blue-200/80'
+                        }`}
+                      >
+                        {u.role}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">

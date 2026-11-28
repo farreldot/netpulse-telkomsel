@@ -1,12 +1,22 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { authApi } from '../services/api';
+import {
+  recordLoginSession,
+  clearSession,
+  initSessionMonitor,
+  isSessionExpired,
+} from '../utils/sessionManager';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
+      if (isSessionExpired()) {
+        clearSession();
+        return null;
+      }
       const savedUser = localStorage.getItem('netpulse_user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch {
@@ -14,7 +24,14 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  const [token, setToken] = useState(() => localStorage.getItem('netpulse_token') || null);
+  const [token, setToken] = useState(() => {
+    if (isSessionExpired()) {
+      clearSession();
+      return null;
+    }
+    return localStorage.getItem('netpulse_token') || null;
+  });
+
   const [loading, setLoading] = useState(false);
 
   const login = async (username, password) => {
@@ -26,6 +43,7 @@ export const AuthProvider = ({ children }) => {
         setUser(response.user);
         localStorage.setItem('netpulse_token', response.token);
         localStorage.setItem('netpulse_user', JSON.stringify(response.user));
+        recordLoginSession();
         return { success: true, user: response.user };
       }
       throw new Error(response.message || 'Login gagal.');
@@ -43,9 +61,19 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('netpulse_token');
-    localStorage.removeItem('netpulse_user');
+    clearSession();
   };
+
+  // Monitor inaktivitas dan batas maksimal sesi secara otomatis
+  useEffect(() => {
+    if (token) {
+      const cleanup = initSessionMonitor(() => {
+        setToken(null);
+        setUser(null);
+      });
+      return cleanup;
+    }
+  }, [token]);
 
   const isAdmin = user?.role === 'admin';
   const isMitra = user?.role === 'mitra';
@@ -88,7 +116,7 @@ export const ProtectedRoute = ({ children, requireAdmin = false }) => {
   }
 
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/sites" replace />;
+    return <Navigate to="/scan" replace />;
   }
 
   return children;

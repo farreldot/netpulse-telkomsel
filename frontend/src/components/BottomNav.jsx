@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Radio, Activity, ScanLine, Users, User } from 'lucide-react';
+import { ScanLine, Radio, Activity, Users, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,6 +8,11 @@ export default function BottomNav() {
   const { isAdmin } = useAuth();
 
   const navItems = [
+    {
+      to: '/scan',
+      label: 'Uji OCR',
+      icon: ScanLine,
+    },
     {
       to: '/sites',
       label: 'Daftar Site',
@@ -17,12 +22,6 @@ export default function BottomNav() {
       to: '/logs',
       label: 'Log Sinyal',
       icon: Activity,
-    },
-    {
-      to: '/scan',
-      label: 'Uji OCR',
-      icon: ScanLine,
-      isSpecial: true,
     },
     ...(isAdmin
       ? [
@@ -52,69 +51,40 @@ export default function BottomNav() {
                 to={item.to}
                 className="relative py-1 px-1.5 focus:outline-none"
               >
-                {({ isActive }) => {
-                  if (item.isSpecial) {
-                    return (
+                {({ isActive }) => (
+                  <motion.div
+                    whileTap={{ scale: 0.92 }}
+                    className="flex flex-col items-center justify-center py-1 px-2 min-w-[54px] sm:min-w-[62px] relative rounded-xl"
+                  >
+                    {/* Active Background Pill Indicator */}
+                    {isActive && (
                       <motion.div
-                        whileHover={{ scale: 1.06, y: -2 }}
-                        whileTap={{ scale: 0.92 }}
-                        className="flex flex-col items-center justify-center -mt-6 md:-mt-5 group"
-                      >
-                        <div
-                          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
-                            isActive
-                              ? 'bg-telkomsel-darkred ring-4 ring-red-100 text-white shadow-red-500/30'
-                              : 'bg-telkomsel-gradient text-white hover:shadow-red-500/40 shadow-red-500/25'
-                          }`}
-                        >
-                          <Icon className="w-5 h-5 stroke-[2.4]" />
-                        </div>
-                        <span
-                          className={`text-[10px] sm:text-[11px] mt-1 font-bold tracking-tight transition-colors ${
-                            isActive ? 'text-telkomsel-red' : 'text-slate-600 group-hover:text-slate-900'
-                          }`}
-                        >
-                          {item.label}
-                        </span>
-                      </motion.div>
-                    );
-                  }
+                        layoutId="bottomNavPill"
+                        className="absolute inset-0 bg-red-50/90 rounded-2xl -z-10 border border-red-200/60"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
 
-                  return (
-                    <motion.div
-                      whileTap={{ scale: 0.92 }}
-                      className="flex flex-col items-center justify-center py-1 px-2 min-w-[54px] sm:min-w-[62px] relative rounded-xl"
-                    >
-                      {/* Active Background Pill Indicator */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="bottomNavPill"
-                          className="absolute inset-0 bg-red-50/90 rounded-2xl -z-10 border border-red-200/60"
-                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        />
-                      )}
-
-                      <div className="relative">
-                        <Icon
-                          className={`w-5 h-5 transition-all duration-200 ${
-                            isActive
-                              ? 'text-telkomsel-red stroke-[2.4] scale-105'
-                              : 'text-slate-400 group-hover:text-slate-600 stroke-[1.8]'
-                          }`}
-                        />
-                      </div>
-                      <span
-                        className={`text-[10px] sm:text-[11px] mt-0.5 tracking-tight transition-colors ${
+                    <div className="relative">
+                      <Icon
+                        className={`w-5 h-5 transition-all duration-200 ${
                           isActive
-                            ? 'font-bold text-telkomsel-red'
-                            : 'font-medium text-slate-500'
+                            ? 'text-telkomsel-red stroke-[2.4] scale-105'
+                            : 'text-slate-400 group-hover:text-slate-600 stroke-[1.8]'
                         }`}
-                      >
-                        {item.label}
-                      </span>
-                    </motion.div>
-                  );
-                }}
+                      />
+                    </div>
+                    <span
+                      className={`text-[10px] sm:text-[11px] mt-0.5 tracking-tight transition-colors ${
+                        isActive
+                          ? 'font-bold text-telkomsel-red'
+                          : 'font-medium text-slate-500'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </motion.div>
+                )}
               </NavLink>
             );
           })}
