@@ -153,30 +153,42 @@ export default function MitraPage() {
 
     setIsSubmitting(true);
     try {
-      if (editingUser) {
-        const payload = {
-          full_name: formData.full_name,
-          role: formData.role,
-          mitra_unit: formData.mitra_unit,
-          is_active: formData.is_active,
-        };
-        if (formData.password) payload.password = formData.password;
+      const payload = {
+        username: formData.username.trim(),
+        full_name: formData.full_name.trim(),
+        role: formData.role,
+        mitra_unit: formData.mitra_unit || 'Mitra Drive Test',
+        is_active: Boolean(formData.is_active),
+      };
 
-        await usersApi.update(editingUser.id, payload);
+      if (editingUser) {
+        if (formData.password && formData.password.trim() !== '') {
+          payload.password = formData.password;
+        }
+
+        const res = await usersApi.update(editingUser.id, payload);
+        const updatedUser = res.data || { ...editingUser, ...payload };
         setUsers((prev) =>
-          prev.map((u) => (u.id === editingUser.id ? { ...u, ...payload } : u))
+          prev.map((u) => (u.id === editingUser.id ? { ...u, ...updatedUser } : u))
         );
       } else {
-        const res = await usersApi.create(formData);
+        payload.password = formData.password;
+        const res = await usersApi.create(payload);
         if (res.success && res.data) {
           setUsers((prev) => [...prev, res.data]);
         } else {
-          setUsers((prev) => [...prev, { ...formData, id: Date.now() }]);
+          setUsers((prev) => [...prev, { ...payload, id: Date.now() }]);
         }
       }
       setModalOpen(false);
     } catch (err) {
-      setFormError(err.message || 'Gagal menyimpan data pengguna.');
+      console.error('[Submit User Error]:', err);
+      const serverMessage =
+        err.response?.data?.message ||
+        err.data?.message ||
+        err.message ||
+        'Terjadi kesalahan saat menambahkan pengguna.';
+      setFormError(serverMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -462,7 +474,7 @@ export default function MitraPage() {
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-telkomsel-red/20 focus:border-telkomsel-red focus:bg-white"
                     >
                       <option value="mitra">Mitra Drive Test</option>
-                      <option value="admin">Administrator</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </div>
 

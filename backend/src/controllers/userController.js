@@ -86,20 +86,30 @@ const getUserById = async (req, res) => {
  */
 const createUser = async (req, res) => {
   try {
-    const { username, password, full_name, role = 'mitra', mitra_unit, is_active = true } = req.body;
+    const { username, password, full_name, fullName, role, mitra_unit, mitraUnit, is_active, isActive } = req.body;
 
-    if (!username || !password || !full_name) {
+    const fullNameVal = full_name || fullName;
+    const mitraUnitVal = mitra_unit || mitraUnit || 'Mitra Drive Test';
+
+    if (!username || !password || !fullNameVal) {
       return res.status(400).json({
         success: false,
         message: 'Field username, password, dan full_name wajib diisi.',
       });
     }
 
-    if (!['admin', 'mitra'].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Role harus berupa "admin" atau "mitra".',
-      });
+    // Normalisasi role agar selalu lolos constraint CHECK (role IN ('admin', 'mitra'))
+    const normalizedRole = String(role || '').toLowerCase().includes('admin') ? 'admin' : 'mitra';
+
+    // Normalisasi is_active menjadi boolean murni
+    const rawIsActive = is_active !== undefined ? is_active : isActive;
+    let normalizedIsActive = true;
+    if (
+      rawIsActive === false ||
+      rawIsActive === 'false' ||
+      String(rawIsActive).toLowerCase() === 'nonaktif'
+    ) {
+      normalizedIsActive = false;
     }
 
     // Periksa apakah username sudah dipakai
@@ -107,7 +117,7 @@ const createUser = async (req, res) => {
     if (existing.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: `Username '${username}' sudah terdaftar. Gunakan username lain.`,
+        message: 'Username sudah digunakan, silakan pilih username lain.',
       });
     }
 
@@ -122,10 +132,10 @@ const createUser = async (req, res) => {
     const result = await query(insertSql, [
       username.trim(),
       hashedPassword,
-      full_name.trim(),
-      role,
-      mitra_unit || null,
-      is_active,
+      fullNameVal.trim(),
+      normalizedRole,
+      mitraUnitVal,
+      normalizedIsActive,
     ]);
 
     return res.status(201).json({
@@ -135,9 +145,15 @@ const createUser = async (req, res) => {
     });
   } catch (error) {
     console.error('[UserController.createUser] Error:', error);
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: 'Username sudah digunakan, silakan pilih username lain.',
+      });
+    }
     return res.status(500).json({
       success: false,
-      message: 'Terjadi kesalahan saat menambahkan pengguna.',
+      message: error.message || 'Terjadi kesalahan saat menambahkan pengguna.',
       error: error.message,
     });
   }
@@ -150,7 +166,7 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, password, full_name, role, mitra_unit, is_active } = req.body;
+    const { username, password, full_name, fullName, role, mitra_unit, mitraUnit, is_active, isActive } = req.body;
 
     // Periksa apakah user ada
     const checkUser = await query('SELECT * FROM users WHERE id = $1', [id]);
@@ -172,24 +188,43 @@ const updateUser = async (req, res) => {
       if (duplicateCheck.rows.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `Username '${username}' sudah digunakan oleh akun lain.`,
+          message: 'Username sudah digunakan, silakan pilih username lain.',
         });
       }
     }
 
-    if (role && !['admin', 'mitra'].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Role harus berupa "admin" atau "mitra".',
-      });
+    // Fleksibel snake_case atau camelCase
+    const fullNameVal = full_name || fullName;
+    const newFullName = fullNameVal ? fullNameVal.trim() : currentUser.full_name;
+    const newUsername = username ? username.trim() : currentUser.username;
+
+    // Normalisasi role
+    let newRole = currentUser.role;
+    if (role !== undefined) {
+      newRole = String(role).toLowerCase().includes('admin') ? 'admin' : 'mitra';
     }
 
-    // Persiapkan nilai baru
-    const newUsername = username ? username.trim() : currentUser.username;
-    const newFullName = full_name ? full_name.trim() : currentUser.full_name;
-    const newRole = role || currentUser.role;
-    const newMitraUnit = mitra_unit !== undefined ? mitra_unit : currentUser.mitra_unit;
-    const newIsActive = is_active !== undefined ? is_active : currentUser.is_active;
+    // Normalisasi mitra_unit
+    let newMitraUnit = currentUser.mitra_unit;
+    const rawMitraUnit = mitra_unit !== undefined ? mitra_unit : mitraUnit;
+    if (rawMitraUnit !== undefined) {
+      newMitraUnit = rawMitraUnit || 'Mitra Drive Test';
+    }
+
+    // Normalisasi is_active
+    let newIsActive = currentUser.is_active;
+    const rawIsActive = is_active !== undefined ? is_active : isActive;
+    if (rawIsActive !== undefined) {
+      if (
+        rawIsActive === false ||
+        rawIsActive === 'false' ||
+        String(rawIsActive).toLowerCase() === 'nonaktif'
+      ) {
+        newIsActive = false;
+      } else {
+        newIsActive = true;
+      }
+    }
 
     let newPassword = currentUser.password;
     if (password && password.trim() !== '') {
@@ -220,9 +255,15 @@ const updateUser = async (req, res) => {
     });
   } catch (error) {
     console.error('[UserController.updateUser] Error:', error);
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: 'Username sudah digunakan, silakan pilih username lain.',
+      });
+    }
     return res.status(500).json({
       success: false,
-      message: 'Terjadi kesalahan saat memperbarui pengguna.',
+      message: error.message || 'Terjadi kesalahan saat memperbarui pengguna.',
       error: error.message,
     });
   }

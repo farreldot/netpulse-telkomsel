@@ -35,6 +35,7 @@ async function request(endpoint, options = {}) {
       const error = new Error(data.message || `Request failed with status ${response.status}`);
       error.status = response.status;
       error.data = data;
+      error.response = { status: response.status, data };
       throw error;
     }
 
